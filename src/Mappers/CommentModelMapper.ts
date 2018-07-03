@@ -15,7 +15,20 @@ class CommentModelMapper {
         model.parentPost = parentPost;
         model.parentDeleted = entity.parentDeleted;
         return model;
-    }
+    };
+
+    public static BusinessToEntity = (commentModel: CommentModel): any => {
+        return {
+            id: commentModel.id,
+            parentId: commentModel.parentPost.id,
+            timestamp: commentModel.contentModel.timestamp,
+            body: commentModel.contentModel.body,
+            author: commentModel.contentModel.author,
+            voteScore: commentModel.votableModel.voteScore,
+            deleted: commentModel.contentModel.deleted,
+            parentDeleted: commentModel.parentDeleted,
+        }
+    };
 }
 
 export default CommentModelMapper;

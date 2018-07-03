@@ -1,9 +1,10 @@
 import PostModel from '../Models/PostModel';
-import * as Redux from 'redux';
+import CategoryModel from '../Models/CategoryModel';
 
-interface AppStore extends Redux.Store {
+interface AppStore {
     posts: Array<PostModel>;
-    editingPostId: string;
+    selectedCategory: CategoryModel;
+    availableCategories: CategoryModel[];
 }
 
 

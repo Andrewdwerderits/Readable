@@ -1,5 +1,4 @@
 import VotableModel from '../Models/VotableModel'
-import EPostCategory from "src/Enums/EPostCategory";
 import PostModel from '../Models/PostModel';
 import PostModelMapper from '../Mappers/PostModelMapper';
 import CommentModelMapper from '../Mappers/CommentModelMapper';
@@ -8,6 +7,8 @@ import EVotableType from '../Enums/EVotableType';
 import VotableModelMapper from '../Mappers/VotableModelMapper';
 import ContentModel from '../Models/ContentModel';
 import EContentType from '../Enums/EContentType';
+import CategoryModel from '../Models/CategoryModel';
+import CategoryModelMapper from '../Mappers/CategoryModelMapper';
 
 const api = "http://localhost:3001";
 
@@ -50,19 +51,26 @@ class ReadableEngine {
             });
     }
 
-    public static GetCategories(): Promise<Array<EPostCategory>> {
+    public static GetCategories(): Promise<Array<CategoryModel>> {
         return fetch(`${api}/categories`,
             {
                     method: 'GET',
                     headers: headers,
                 })
             .then(res => res.json())
-            .then(data => data.categories)
-            .then((result: string[]) => {
-                return result.map((category: string) => {
-                    return EPostCategory[category];
+            .then((data: any) => {
+                let categoryModels = data.categories.map((result: any) => {
+                    return CategoryModelMapper.entityToBusiness(result);
                 });
-            })
+
+                let allCategoriesModel = new CategoryModel("", "");
+                allCategoriesModel.name = "All";
+                allCategoriesModel.path = "";
+
+                categoryModels.push(allCategoriesModel);
+
+                return categoryModels;
+            });
     }
 
     public static GetAllPostsAndComments(): Promise<Array<PostModel>> {
@@ -102,7 +110,7 @@ class ReadableEngine {
                 return res.json()
             })
             .then((result: any) => {
-                    return PostModelMapper.entityToBusiness(result);
+                return PostModelMapper.entityToBusiness(result);
             });
     }
 
@@ -152,13 +160,21 @@ class ReadableEngine {
     }
 
     public static SaveComment(comment: CommentModel): Promise<CommentModel> {
-        let url = `${api}/comments/${comment.id}`;
+        let url = '';
+        let method = '';
+        if (comment.contentModel.existsOnServer) {
+            url = `${api}/comments/${comment.id}`;
+            method = 'PUT';
+        } else {
+            url = `${api}/comments`;
+            method = 'POST';
+        }
 
         return fetch(url,
             {
-                method: 'PUT',
+                method: method,
                 headers: headers,
-                body: JSON.stringify({title: comment.contentModel.title, body: comment.contentModel.body }),
+                body: JSON.stringify(CommentModelMapper.BusinessToEntity(comment)),
             })
             .then((res: any) => {
                 return res.json()
@@ -170,18 +186,23 @@ class ReadableEngine {
 
     public static SavePost(post: PostModel): Promise<PostModel> {
 
-        let url = `${api}/posts/${post.id}`;
+        let url = '';
+        let method = '';
+        if (post.contentModel.existsOnServer) {
+            url = `${api}/posts/${post.id}`;
+            method = 'PUT';
+        } else {
+            url = `${api}/posts`;
+            method = 'POST';
+        }
+
         let returnedPost: PostModel;
 
         return fetch(url,
             {
-                method: 'PUT',
+                method: method,
                 headers: headers,
-                body: JSON.stringify({
-                    title: post.contentModel.title,
-                    body: post.contentModel.body,
-                    author: post.contentModel.author,
-                }),
+                body: JSON.stringify(PostModelMapper.BusinessToEntity(post)),
             })
             .then((res: any) => {
                 return res.json()
@@ -203,7 +224,12 @@ class ReadableEngine {
             });
     }
 
-
+    public static SaveContentModel(contentModel: ContentModel, posts: PostModel[]): Promise<CommentModel | PostModel> {
+        if (contentModel.type === EContentType.post) {
+            return ReadableEngine.SavePost(ReadableEngine.GetPostForContentModel(posts, contentModel));
+        }
+        return ReadableEngine.SaveComment(ReadableEngine.GetCommentForContentModel(posts, contentModel));
+    }
 
     public static DeletePost(id: string, type: EContentType): Promise<any> {
 
@@ -251,6 +277,19 @@ class ReadableEngine {
 
             return postForContentModel;
         }
+    }
+
+    public static GetCommentForContentModel(posts: PostModel[], contentModel: ContentModel): CommentModel {
+
+        for (let post of posts) {
+            for (let comment of post.comments) {
+                if (comment.id === contentModel.id) {
+                    return comment;
+                }
+            }
+        }
+        throw new Error("Unknown post for comment!");
+
     }
 
     public static isContentModelBeingEdited(posts: PostModel[], contentModel: ContentModel, editingPostId: string) {

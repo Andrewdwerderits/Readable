@@ -9,18 +9,23 @@ import VotableModel from '../Models/VotableModel';
 import CommentModel from '../Models/CommentModel';
 import { SAVE_POST } from '../Actions/SavePost';
 import { DELETE_POST } from '../Actions/DeletePost';
-import {EDIT_POST} from "src/Actions/EditPost";
-import EContentType from "src/Enums/EContentType";
+import EContentType from '../Enums/EContentType';
+import { CHANGE_CATEGORY } from '../Actions/ChangeCategory';
+import { GET_ALL_CATEGORIES } from '../Actions/GetAllCategories';
+import CategoryModel from '../Models/CategoryModel';
+
+const initialState: AppStore = {
+    posts: [],
+    availableCategories: [],
+    selectedCategory: new CategoryModel("All", ""),
+};
 
 /* tslint:disable */
-const ApplicationReducer = (state: AppStore, action: IAction) => {
+export const ApplicationReducer = (state: AppStore, action: IAction): AppStore => {
     /*tslint:enable */
 
     if (typeof state === 'undefined') {
-        return {
-            posts: [],
-            editingPostId: "",
-        }
+        return initialState;
     }
 ​
     switch(action.type) {
@@ -39,23 +44,18 @@ const ApplicationReducer = (state: AppStore, action: IAction) => {
         case EActionType.deletePost:
             let deleteAction = <DELETE_POST>action;
             return updateStateForDelete(deleteAction.payload.id, deleteAction.payload.type, state);
-        case EActionType.editPost:
-            let editAction = <EDIT_POST>action;
-            return {
-                ...state,
-                editingPostId: editAction.payload,
-            };
-        case EActionType.leaveEdit:
-            return {
-                ...state,
-                editingPostId: "",
-            };
+        case EActionType.changeCategory:
+            let changeCategoryAction = <CHANGE_CATEGORY>action;
+            return updateStateForChangeCategory(changeCategoryAction.payload, state);
+        case EActionType.getAllCategories:
+            let getAllCategoriesAction = <GET_ALL_CATEGORIES>action;
+            return updateStateForGetAllCategories(getAllCategoriesAction.payload, state);
         default:
             return state;
     }
 };
 
-const UpdateStateForVote = (votable: VotableModel, state: AppStore) => {
+const UpdateStateForVote = (votable: VotableModel, state: AppStore): AppStore => {
     let posts = state.posts.slice();
 
     switch(votable.type) {
@@ -92,18 +92,43 @@ const UpdateStateForVote = (votable: VotableModel, state: AppStore) => {
     };
 };
 
-const updateStateForSave = (post: PostModel, state: AppStore) => {
-    let postIndex = -1;
+const updateStateForSave = (post: PostModel | CommentModel, state: AppStore): AppStore => {
+    let newPosts: PostModel[];
 
-    let newPosts = state.posts.filter((existingPost: PostModel, index: number) => {
-        if (post.id !== existingPost.id) {
-            return true;
-        }
-        postIndex = index;
-        return false;
-    });
+    if (post instanceof PostModel) {
+        let postIndex = -1;
+        newPosts = state.posts.filter((existingPost: PostModel, index: number) => {
+            if (post.id !== existingPost.id) {
+                return true;
+            }
+            postIndex = index;
+            return false;
+        });
 
-    newPosts.splice(postIndex, 0, post);
+        newPosts.splice(postIndex, 0, post);
+
+    } else {
+        newPosts = state.posts.splice(0);
+
+        newPosts.forEach((oldPost: PostModel) => {
+            let commentIndex = -1;
+            let comments = oldPost.comments.filter((oldComment: CommentModel, index: number) => {
+
+                oldComment.parentPost = oldPost;
+                if (post.id !== oldComment.id) {
+                    return true;
+                }
+                commentIndex = index;
+                return false;
+            });
+
+            if (commentIndex != -1) {
+                comments.splice(commentIndex, 0, post);
+            }
+
+            oldPost.comments = comments;
+        })
+    }
 
     return {
         ...state,
@@ -111,7 +136,7 @@ const updateStateForSave = (post: PostModel, state: AppStore) => {
     }
 };
 
-const updateStateForDelete = (id: string, type: EContentType, state: AppStore) => {
+const updateStateForDelete = (id: string, type: EContentType, state: AppStore): AppStore => {
     let posts = state.posts.slice();
 
     if (type === EContentType.comment) {
@@ -135,4 +160,16 @@ const updateStateForDelete = (id: string, type: EContentType, state: AppStore) =
     }
 };
 
-export default ApplicationReducer;
+const updateStateForChangeCategory = (category: CategoryModel, state: AppStore): AppStore => {
+    return {
+        ...state,
+        selectedCategory: category,
+    }
+};
+
+const updateStateForGetAllCategories = (categories: Array<CategoryModel>, state: AppStore): AppStore => {
+    return {
+        ...state,
+        availableCategories: categories,
+    }
+};

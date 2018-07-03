@@ -2,9 +2,9 @@ import VotableModel from '../Models/VotableModel';
 import IAction from '../Actions/IAction';
 import EActionType from '../Enums/EActionType';
 
-export class VOTE_ACTION implements IAction {
-        public type: EActionType;
-        public payload: VotableModel;
+export interface VOTE_ACTION extends IAction {
+        type: EActionType;
+        payload: VotableModel;
 }
 
 export const VoteActionCreator = ((model: VotableModel): VOTE_ACTION => {

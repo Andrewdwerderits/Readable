@@ -13,6 +13,7 @@ class ContentModelMapper {
         model.title = entity.title;
         model.type = type;
         model.parentPost = parentPost;
+        model.existsOnServer = true;
         return model;
     }
 }

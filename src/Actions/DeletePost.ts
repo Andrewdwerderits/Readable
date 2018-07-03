@@ -2,9 +2,9 @@ import IAction from '../Actions/IAction';
 import EActionType from '../Enums/EActionType';
 import EContentType from '../Enums/EContentType';
 
-export class DELETE_POST implements IAction {
-    public type: EActionType;
-    public payload: deletePostPayload;
+export interface DELETE_POST extends IAction {
+    type: EActionType;
+    payload: deletePostPayload;
 }
 
 interface deletePostPayload {

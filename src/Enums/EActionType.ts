@@ -3,9 +3,8 @@ enum EActionType {
     vote,
     savePost,
     deletePost,
-    editPost,
-    enterEdit,
-    leaveEdit,
+    changeCategory,
+    getAllCategories,
 }
 
 export default EActionType;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PostModel from '../Models/PostModel';
-import Votable from '../Components/Votable';
-import TextContent from '../Components/TextContent';
+// import Votable from '../Components/Votable';
+// import TextContent from '../Components/TextContent';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 // import CardHeader from '@material-ui/core/CardHeader';
@@ -11,8 +11,9 @@ import withStyles, {WithStyles} from "@material-ui/core/styles/withStyles";
 import { RouteComponentProps, withRouter} from 'react-router-dom';
 import {connect} from "react-redux";
 import Button from '@material-ui/core/Button';
-import EContentType from '../Enums/EContentType';
-import EContentField from '../Enums/EContentField';
+// import EContentType from '../Enums/EContentType';
+// import EContentField from '../Enums/EContentField';
+import ContentContainer from '../Components/ContentContainer';
 
 const styles = {
     expandText: {
@@ -22,76 +23,33 @@ const styles = {
 
 interface SimplePostProps extends RouteComponentProps<any> {
      postModel: PostModel;
-     isEditing: boolean;
      isExpanded: boolean;
 }
 
 interface SimplePostDispatchProps {
-    editPost(): void;
+    goToPostDetail(): void;
 }
-
-const mapDispatchToProps = ((dispatch: any, ownProps: SimplePostProps): SimplePostDispatchProps => {
-    return {
-
-        editPost: (() => {
-            ownProps.history.push(`/edit/${ownProps.postModel.id}`);
-        })
-    }
-});
 
 /* tslint:disable */
 class SimplePost extends React.Component<SimplePostProps & SimplePostDispatchProps & WithStyles<'expandText'>, any>{
 /* tslint:enable */
 
+    public goToPostDetail = (() => {
+        this.props.history.push(`/${this.props.postModel.category.path}/${this.props.postModel.id}`);
+    });
+
     render() {
 
         return (
             <Grid fluid>
-                    <TextContent
-                        id={this.props.postModel.id}
-                        postType={EContentType.post}
-                        fieldType={EContentField.title}
-                        parentPost={this.props.postModel}
-                        body={this.props.postModel.contentModel.title}
-                        extraText={""}
-                        isEditing={this.props.isEditing}>
-                    </TextContent>
                 <Row>
                     <Card>
                         <CardContent>
+                            <ContentContainer
+                                model={this.props.postModel}>
+                            </ContentContainer>
                             <Row>
-                                <Col xs={6} xsOffset={0}>
-                                    <TextContent
-                                        id={this.props.postModel.id}
-                                        postType={EContentType.post}
-                                        fieldType={EContentField.author}
-                                        parentPost={this.props.postModel}
-                                        body={this.props.postModel.contentModel.author}
-                                        extraText={"Author: "}
-                                        isEditing={this.props.isEditing}
-                                    >
-                                    </TextContent>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col xs={6}>
-                                    <TextContent
-                                        id={this.props.postModel.id}
-                                        postType={EContentType.post}
-                                        fieldType={EContentField.body}
-                                        parentPost={this.props.postModel}
-                                        body={this.props.postModel.contentModel.body}
-                                        extraText={""}
-                                        isEditing={this.props.isEditing}
-                                    >
-                                    </TextContent>
-                                </Col>
-                                <Col xs={2}>
-                                    <Votable votableModel={this.props.postModel.votableModel} />
-                                </Col>
-                            </Row>
-                            <Row>
-                                {getExpandButton(this.props.isExpanded, this.props.editPost, this.props.postModel.comments.length)}
+                                {getExpandButton(this.props.isExpanded, this.goToPostDetail, this.props.postModel.comments.length)}
                             </Row>
                         </CardContent>
                     </Card>
@@ -101,12 +59,12 @@ class SimplePost extends React.Component<SimplePostProps & SimplePostDispatchPro
     }
 }
 
-const getExpandButton = (isExpanded: boolean, editPost: () => void, commentCount: number) => {
+const getExpandButton = (isExpanded: boolean, goToPostDetail: () => void, commentCount: number) => {
     if (!isExpanded) {
         return (
             <Col xs={8} xsOffset={1}>
                 <Button color='primary'
-                    onClick={editPost}>See all {commentCount} comments
+                    onClick={goToPostDetail}>See all {commentCount} comments
                 </Button>
             </Col>
         );
@@ -117,5 +75,5 @@ const getExpandButton = (isExpanded: boolean, editPost: () => void, commentCount
 
 export default withRouter(connect(
         null,
-        mapDispatchToProps,
+        null,
     )(withStyles(styles)(SimplePost)));
