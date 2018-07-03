@@ -13,16 +13,16 @@ import EContentType from '../Enums/EContentType';
 import { CHANGE_CATEGORY } from '../Actions/ChangeCategory';
 import { GET_ALL_CATEGORIES } from '../Actions/GetAllCategories';
 import CategoryModel from '../Models/CategoryModel';
+import {TOGGLE_POST_DETAILS_MODE} from "src/Actions/TogglePostDetailsMode";
 
 const initialState: AppStore = {
     posts: [],
     availableCategories: [],
     selectedCategory: new CategoryModel("All", ""),
+    inPostDetailMode: false,
 };
 
-/* tslint:disable */
 export const ApplicationReducer = (state: AppStore, action: IAction): AppStore => {
-    /*tslint:enable */
 
     if (typeof state === 'undefined') {
         return initialState;
@@ -50,6 +50,9 @@ export const ApplicationReducer = (state: AppStore, action: IAction): AppStore =
         case EActionType.getAllCategories:
             let getAllCategoriesAction = <GET_ALL_CATEGORIES>action;
             return updateStateForGetAllCategories(getAllCategoriesAction.payload, state);
+        case EActionType.togglePostDetailsMode:
+            let togglePostDetailsModeAction = <TOGGLE_POST_DETAILS_MODE>action;
+            return updateStateForTogglePostDetailsMode(togglePostDetailsModeAction.payload, state);
         default:
             return state;
     }
@@ -171,5 +174,12 @@ const updateStateForGetAllCategories = (categories: Array<CategoryModel>, state:
     return {
         ...state,
         availableCategories: categories,
+    }
+};
+
+const updateStateForTogglePostDetailsMode = (enterPostDetails: boolean, state: AppStore): AppStore => {
+    return {
+        ...state,
+        inPostDetailMode: enterPostDetails,
     }
 };

@@ -13,8 +13,6 @@ import { SavePostActionCreator } from '../Actions/SavePost';
 import { connect, MapDispatchToProps, MapStateToProps } from "react-redux";
 import PostModel from '../Models/PostModel';
 import { DeletePostActionCreator } from '../Actions/DeletePost';
-// import { EditPostActionCreator } from '../Actions/EditPost';
-// import { LeaveEditModeActionCreator } from '../Actions/LeaveEditMode';
 import { RouteComponentProps, withRouter} from 'react-router-dom';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
@@ -23,13 +21,14 @@ import CommentModel from '../Models/CommentModel';
 import AppStore from '../Reducers/AppStore';
 import Votable from '../Components/Votable';
 import TextContent from '../Components/TextContent';
+import ContentModel from '../Models/ContentModel';
+import { TogglePostDetailsModeActionCreator } from '../Actions/TogglePostDetailsMode';
 
 interface ContentContainerProps extends RouteComponentProps<any> {
     model: CommentModel | PostModel;
 }
 
 interface ContentContainerDispatchProps {
-    deletePost: () => void;
     dispatch: any;
 }
 
@@ -40,20 +39,13 @@ interface ContentContainerState {
 
 interface ContentContainerStoreProps {
     posts: Array<PostModel>;
+    inPostDetailMode: boolean;
 }
 
 interface ContentContainerAllProps extends ContentContainerProps, ContentContainerDispatchProps, ContentContainerStoreProps {}
 
 const mapDispatchToProps: MapDispatchToProps<ContentContainerDispatchProps, ContentContainerProps> = (dispatch: any, ownProps: ContentContainerProps): ContentContainerDispatchProps => {
     return {
-        deletePost: (() => {
-            let id = ownProps.model.id;
-            return ReadableEngine.DeletePost(id, ownProps.model.contentModel.type)
-                .then(() => {
-                    dispatch(DeletePostActionCreator(id, ownProps.model.contentModel.type));
-                });
-        }),
-
         dispatch: dispatch,
     }
 };
@@ -61,6 +53,7 @@ const mapDispatchToProps: MapDispatchToProps<ContentContainerDispatchProps, Cont
 const mapStateToProps: MapStateToProps<ContentContainerStoreProps, ContentContainerProps, AppStore> = (state: AppStore): ContentContainerStoreProps => {
     return {
         posts: state.posts,
+        inPostDetailMode: state.inPostDetailMode,
     }
 };
 
@@ -85,7 +78,28 @@ class ContentContainer extends React.Component<ContentContainerAllProps, Content
     };
 
     public delete = (event: React.MouseEvent<HTMLElement>) => {
-        this.props.deletePost();
+        let id = this.props.model.id;
+
+        if (!this.props.model.contentModel.existsOnServer) {
+            this.props.dispatch(DeletePostActionCreator(id, this.props.model.contentModel.type));
+            let postModel = this.props.model as PostModel;
+            if (this.props.inPostDetailMode && postModel != null) {
+                this.props.dispatch(TogglePostDetailsModeActionCreator(false));
+                this.props.history.push(`/${postModel.category.path}`);
+            }
+        }
+
+        return ReadableEngine.DeletePost(id, this.props.model.contentModel.type)
+            .then(() => {
+                this.props.dispatch(DeletePostActionCreator(id, this.props.model.contentModel.type));
+            })
+            .then(() => {
+                let postModel = this.props.model as PostModel;
+                if (this.props.inPostDetailMode && postModel != null) {
+                    this.props.dispatch(TogglePostDetailsModeActionCreator(false));
+                    this.props.history.push(`/${postModel.category.path}`);
+                }
+            });
     };
 
     public save = (event: React.MouseEvent<HTMLElement>) => {
@@ -130,7 +144,7 @@ class ContentContainer extends React.Component<ContentContainerAllProps, Content
 
     state = {
         contentBeforeEdit: this.props.model instanceof PostModel? PostModel.Copy(this.props.model) : CommentModel.Copy(this.props.model),
-        isEditing: false,
+        isEditing: shouldEditModel(this.props.model.contentModel)
     };
 
     render() {
@@ -234,6 +248,13 @@ const getTitleContent = (model: PostModel | CommentModel, isEditing: boolean, ha
         );
     }
     return
+};
+
+const shouldEditModel = (model: ContentModel): boolean => {
+    return model.author === "" ||
+        model.author == null ||
+        model.body === "" ||
+        model.body == null;
 };
 
 export default withRouter(connect(

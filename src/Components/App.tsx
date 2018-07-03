@@ -1,18 +1,20 @@
 import * as React from 'react';
 import { Route, RouteComponentProps, withRouter } from 'react-router-dom';
-import RootView from './RootView';
-import PostDetailView from './PostDetailView';
-import { connect } from "react-redux";
+import RootView from '../Components/RootView';
+import PostDetailView from '../Components/PostDetailView';
+import { connect, MapDispatchToProps, MapStateToProps } from "react-redux";
 import AppStore from '../Reducers/AppStore';
 import PostModel from '../Models/PostModel';
 import { GetAllPostsActionCreator } from '../Actions/GetAllPosts';
 import ReadableEngine from '../Engines/ReadableEngine';
 import { GetAllCategoriesActionCreator } from '../Actions/GetAllCategories';
 import CategoryModel from '../Models/CategoryModel';
+import { ChangeCategoryActionCreator } from '../Actions/ChangeCategory';
 
 interface AppDispatchProps {
-    getAll: () => void;
-    getCategories: () => void;
+    getAll: () => Promise<Array<PostModel>>;
+    getCategories: () => Promise<Array<CategoryModel>>;
+    dispatch: any;
 }
 
 interface AppProps extends RouteComponentProps<any> {
@@ -23,32 +25,38 @@ interface AppStoreProps {
     availableCategories: Array<CategoryModel>;
 }
 
-const mapDispatchToProps = ((dispatch: any): AppDispatchProps => {
+interface AppAllProps extends AppDispatchProps, AppStoreProps, AppProps {}
+
+const mapDispatchToProps: MapDispatchToProps<AppDispatchProps, AppProps> = ((dispatch: any): AppDispatchProps => {
     return {
-        getAll: (() => {
+        getAll: ((): Promise<Array<PostModel>> =>{
             return ReadableEngine.GetAllPostsAndComments()
                 .then((posts: Array<PostModel>) => {
                     dispatch(GetAllPostsActionCreator(posts));
+                    return posts;
                 });
         }),
 
-        getCategories: (() => {
+        getCategories: ((): Promise<Array<CategoryModel>> => {
             return ReadableEngine.GetCategories()
                 .then((categories: Array<CategoryModel>) => {
                     dispatch(GetAllCategoriesActionCreator(categories));
+                    return categories;
                 });
         }),
+
+        dispatch: dispatch,
     }
 });
 
-const mapStateToProps = ((state: AppStore): AppStoreProps => {
+const mapStateToProps: MapStateToProps<AppStoreProps, AppProps, AppStore> = ((state: AppStore): AppStoreProps => {
     return {
         posts: state.posts,
         availableCategories: state.availableCategories,
     }
 });
 
-class App extends React.Component<AppStoreProps & AppDispatchProps & AppProps> {
+class App extends React.Component<AppAllProps> {
 
     public render() {
         let path = this.props.history.location.pathname;
@@ -84,8 +92,23 @@ class App extends React.Component<AppStoreProps & AppDispatchProps & AppProps> {
     }
 
     componentDidMount() {
-        this.props.getAll();
-        this.props.getCategories();
+        let getAllPromise = this.props.getAll();
+        let getCategoriesPromise = this.props.getCategories();
+        Promise.all([getAllPromise, getCategoriesPromise])
+            .then(() => {
+                let path = this.props.history.location.pathname;
+                let searchPath = '/';
+                if (path.split(searchPath).length == 2) {
+                    let editPostPath = path.slice(path.lastIndexOf(searchPath) + searchPath.length);
+                    let postCategory = this.props.availableCategories.find((category: CategoryModel) => {
+                        return category.path === editPostPath;
+                    });
+
+                    if (postCategory != null) {
+                        this.props.dispatch(ChangeCategoryActionCreator(postCategory));
+                    }
+                }
+            })
     }
 
     private getPostForEdit(postId: string): PostModel {

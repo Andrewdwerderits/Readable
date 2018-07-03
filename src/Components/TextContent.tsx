@@ -69,4 +69,4 @@ class TextContent extends React.Component<TextContentAllProps> {
 export default withRouter(connect(
     null,
     null
-)<TextContentAllProps>(TextContent));
+)(TextContent));

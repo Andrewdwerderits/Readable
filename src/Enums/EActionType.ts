@@ -5,6 +5,7 @@ enum EActionType {
     deletePost,
     changeCategory,
     getAllCategories,
+    togglePostDetailsMode,
 }
 
 export default EActionType;

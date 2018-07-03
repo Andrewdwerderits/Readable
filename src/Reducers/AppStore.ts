@@ -5,6 +5,7 @@ interface AppStore {
     posts: Array<PostModel>;
     selectedCategory: CategoryModel;
     availableCategories: CategoryModel[];
+    inPostDetailMode: boolean;
 }
 
 

@@ -1,16 +1,16 @@
 import * as React from 'react';
 import '../Styles/icon.css';
 import '../Styles/text.css';
-import { connect } from "react-redux";
+import { connect, MapDispatchToProps, MapStateToProps } from "react-redux";
 import {ChangeEvent} from "react";
 import { RouteComponentProps, withRouter} from 'react-router-dom';
 import { ChangeCategoryActionCreator} from '../Actions/ChangeCategory';
-// import Typography from '@material-ui/core/Typography';
 import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AppStore from '../Reducers/AppStore';
 import CategoryModel from '../Models/CategoryModel';
+import { TogglePostDetailsModeActionCreator } from '../Actions/TogglePostDetailsMode';
 
 interface CategoryViewProps extends RouteComponentProps<any> {
     category: CategoryModel;
@@ -24,34 +24,38 @@ interface CategoryViewStoreProps {
     availableCategories: CategoryModel[];
 }
 
-const mapDispatchToProps = ((dispatch: any): CategoryViewDispatchProps => {
+interface CategoryViewAllProps extends CategoryViewProps, CategoryViewDispatchProps, CategoryViewStoreProps {}
+
+const mapDispatchToProps: MapDispatchToProps<CategoryViewDispatchProps, CategoryViewProps> = ((dispatch: any): CategoryViewDispatchProps => {
     return {
         dispatch: dispatch,
     }
 });
 
-
-const mapStateToProps = ((state: AppStore): CategoryViewStoreProps => {
+const mapStateToProps: MapStateToProps<CategoryViewStoreProps, CategoryViewProps, AppStore> = ((state: AppStore): CategoryViewStoreProps => {
     return {
         availableCategories: state.availableCategories,
     }
 });
-
-interface CategoryViewAllProps extends CategoryViewProps, CategoryViewDispatchProps, CategoryViewStoreProps {}
 
 class CategoryView extends React.Component<CategoryViewAllProps> {
 
     public handleCategoryChange = (event: ChangeEvent<HTMLInputElement>, value: number ) => {
         let category = getCategoryFromSelectValue(value, this.props.availableCategories);
         this.props.dispatch(ChangeCategoryActionCreator(category));
+        this.props.dispatch(TogglePostDetailsModeActionCreator(false));
         this.props.history.push(`/${category.path}`);
     };
 
     render() {
+        let indexOfCategory = this.props.availableCategories.findIndex((category: CategoryModel) => {
+           return category.name === this.props.category.name && category.path === this.props.category.path;
+        });
+
         return (
             <div>
                 <AppBar position="static">
-                    <Tabs value={0} onChange={this.handleCategoryChange}>
+                    <Tabs value={indexOfCategory} onChange={this.handleCategoryChange}>
                         {this.props.availableCategories.map((value: CategoryModel) => {
                             return (
                                 <Tab label={value.name} key={value.name}/>
@@ -74,4 +78,4 @@ const getCategoryFromSelectValue = (value: number, availableCategories: Category
 export default withRouter(connect(
     mapStateToProps,
     mapDispatchToProps
-)<CategoryViewAllProps>(CategoryView));
+)(CategoryView));

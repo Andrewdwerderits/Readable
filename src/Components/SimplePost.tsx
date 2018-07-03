@@ -1,18 +1,12 @@
 import * as React from 'react';
 import PostModel from '../Models/PostModel';
-// import Votable from '../Components/Votable';
-// import TextContent from '../Components/TextContent';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
-// import CardHeader from '@material-ui/core/CardHeader';
-// import Typography from '@material-ui/core/Typography';
 import {Grid, Row, Col} from 'react-flexbox-grid';
 import withStyles, {WithStyles} from "@material-ui/core/styles/withStyles";
 import { RouteComponentProps, withRouter} from 'react-router-dom';
 import {connect} from "react-redux";
 import Button from '@material-ui/core/Button';
-// import EContentType from '../Enums/EContentType';
-// import EContentField from '../Enums/EContentField';
 import ContentContainer from '../Components/ContentContainer';
 
 const styles = {
@@ -26,12 +20,10 @@ interface SimplePostProps extends RouteComponentProps<any> {
      isExpanded: boolean;
 }
 
-interface SimplePostDispatchProps {
-    goToPostDetail(): void;
-}
+interface SimplePostAllProps extends SimplePostProps, WithStyles<'expandText'> {}
 
 /* tslint:disable */
-class SimplePost extends React.Component<SimplePostProps & SimplePostDispatchProps & WithStyles<'expandText'>, any>{
+class SimplePost extends React.Component<SimplePostAllProps>{
 /* tslint:enable */
 
     public goToPostDetail = (() => {
