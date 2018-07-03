@@ -2,40 +2,44 @@ import * as React from 'react';
 import SimplePost from '../Components/SimplePost';
 import PostModel from '../Models/PostModel';
 import AppStore from '../Reducers/AppStore';
-import { connect } from 'react-redux'
+import {connect, MapDispatchToProps, MapStateToProps } from 'react-redux'
 import ReadableEngine from '../Engines/ReadableEngine';
 import { GetAllPostsActionCreator } from '../Actions/GetAllPosts';
 import Button from '@material-ui/core/Button';
 import EContentType from "src/Enums/EContentType";
-import {SavePostActionCreator} from "src/Actions/SavePost";
+import {SavePostActionCreator} from '../Actions/SavePost';
 import * as uuid from "uuid";
-import { RouteComponentProps, withRouter} from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import CategoryView from '../Components/CategoryView';
 import CategoryModel from '../Models/CategoryModel';
 import ESortType from '../Enums/ESortType';
-import {SortPostActionCreator} from "src/Actions/SortPosts";
+import { SortPostActionCreator } from "src/Actions/SortPosts";
+import { Row } from 'react-flexbox-grid';
+import {TogglePostDetailsModeActionCreator} from '../Actions/TogglePostDetailsMode';
 
 interface RootViewProps extends RouteComponentProps<any> {
 }
 
-class RootViewDispatchProps {
-    public getAll: () => void;
+interface RootViewDispatchProps {
+    getAll: () => void;
     dispatch: any;
 }
 
-class RootViewStoreProps {
+interface RootViewStoreProps {
     posts: Array<PostModel>;
     selectedCategory: CategoryModel;
 }
 
-const mapStateToProps = ((state: AppStore): RootViewStoreProps => {
+interface RootViewAllProps extends RootViewProps, RootViewStoreProps, RootViewDispatchProps {}
+
+const mapStateToProps: MapStateToProps<RootViewStoreProps, RootViewProps, AppStore> = ((state: AppStore): RootViewStoreProps => {
     return {
         posts: state.posts,
         selectedCategory: state.selectedCategory,
     }
 });
 
-const mapDispatchToProps = ((dispatch: any, ownProps: RootViewProps): RootViewDispatchProps => {
+const mapDispatchToProps: MapDispatchToProps<RootViewDispatchProps, RootViewProps> = ((dispatch: any, ownProps: RootViewProps): RootViewDispatchProps => {
     return {
         getAll: (() => {
             return ReadableEngine.GetAllPostsAndComments()
@@ -49,7 +53,7 @@ const mapDispatchToProps = ((dispatch: any, ownProps: RootViewProps): RootViewDi
 });
 
 /* tslint:disable */
-class RootView extends React.Component<RootViewProps & RootViewDispatchProps & RootViewStoreProps>{
+class RootView extends React.Component<RootViewAllProps>{
     /* tslint:enable */
 
     public addPost = () => {
@@ -66,6 +70,7 @@ class RootView extends React.Component<RootViewProps & RootViewDispatchProps & R
         newPost.contentModel.existsOnServer = false;
 
         this.props.dispatch(SavePostActionCreator(newPost));
+        this.props.dispatch(TogglePostDetailsModeActionCreator(true));
         this.props.history.push(`/${newPost.category.path}/${newPost.id}`);
     };
 
@@ -86,30 +91,38 @@ class RootView extends React.Component<RootViewProps & RootViewDispatchProps & R
 
         return (
             <div>
-                <CategoryView category={this.props.selectedCategory}/>
-                <Button color='primary'
-                    variant='outlined'
-                    onClick={this.setSortTypeHighestVote}>
-                    Sort By Highest Vote
-                </Button>
-                <Button color='primary'
-                    variant='outlined'
-                    onClick={this.setSortTypeLatestDate}>
-                    Sort By Date
-                </Button>
-                {filteredPosts.map((post: PostModel) => {
-                    return (
-                        <SimplePost
-                            key={post.id}
-                            postModel={post}
-                            isExpanded={false}
-                        >
-                        </SimplePost>
-                    );
-                })}
-                <Button color='primary'
-                        onClick={this.addPost}>Add new post
-                </Button>
+                <Row>
+                    <CategoryView category={this.props.selectedCategory}/>
+                </Row>
+                <Row>
+                    <Button color='primary'
+                        variant='outlined'
+                        onClick={this.setSortTypeHighestVote}>
+                        Sort By Highest Vote
+                    </Button>
+                    <Button color='primary'
+                        variant='outlined'
+                        onClick={this.setSortTypeLatestDate}>
+                        Sort By Date
+                    </Button>
+                </Row>
+                <Row>
+                    {filteredPosts.map((post: PostModel) => {
+                        return (
+                            <SimplePost
+                                key={post.id}
+                                postModel={post}
+                                isExpanded={false}
+                            >
+                            </SimplePost>
+                        );
+                    })}
+                </Row>
+                <Row>
+                    <Button color='primary'
+                            onClick={this.addPost}>Add new post
+                    </Button>
+                </Row>
             </div>
         )
     }
