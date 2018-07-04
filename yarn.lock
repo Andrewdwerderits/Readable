@@ -5644,7 +5644,6 @@ react-scripts-ts@2.16.0:
     tsconfig-paths-webpack-plugin "^2.0.0"
     tslint "^5.7.0"
     tslint-config-prettier "^1.10.0"
-    tslint-react "^3.2.0"
     uglifyjs-webpack-plugin "^1.1.8"
     url-loader "0.6.2"
     webpack "3.8.1"
@@ -6757,12 +6756,6 @@ tslib@^1.8.0, tslib@^1.8.1:
 tslint-config-prettier@^1.10.0:
   version "1.12.0"
   resolved "https://artifactory.lv9devmbo.com:443/artifactory/api/npm/npm/tslint-config-prettier/-/tslint-config-prettier-1.12.0.tgz#bc8504f286ecf42b906f3d1126a093114f5729cc"
-
-tslint-react@^3.2.0:
-  version "3.6.0"
-  resolved "https://artifactory.lv9devmbo.com:443/artifactory/api/npm/npm/tslint-react/-/tslint-react-3.6.0.tgz#7f462c95c4a0afaae82507f06517ff02942196a1"
-  dependencies:
-    tsutils "^2.13.1"
 
 tslint@^5.7.0:
   version "5.10.0"
